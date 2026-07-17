@@ -1,0 +1,20 @@
+{
+  "appDisplayName": "Tandem AI Chat",
+  "bundleId": "com.tandemai.tandemdesktop",
+  "websiteHostPath": "sergey111991kv.github.io/tandem-ai-chat",
+  "termsUrl": "https://addeo.github.io/clowSpeakerT/docs/",
+  "privacyUrl": "https://addeo.github.io/clowSpeaker/docs/",
+  "supportEmail": "supp0rt.serg@yandex.com",
+  "donationsUrl": "https://destream.net/live/SergeyKosilov/donate",
+  "billingProvider": "external",
+  "showsPaidPurchaseUI": false,
+  "lemonSqueezy": {
+    "storeId": "1210409",
+    "variantId": "1892330",
+    "checkoutUrl": "https://tandem-chat.lemonsqueezy.com/checkout/buy/c9f40173-6751-419d-b148-574e3151d956"
+  },
+  "tdlib": {
+    "apiId": 33781437,
+    "apiHash": "24bc82d2914a297726051f098c8c0325"
+  }
+}
