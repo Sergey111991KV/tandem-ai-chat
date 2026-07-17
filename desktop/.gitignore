@@ -1,0 +1,29 @@
+# Flutter / Dart (desktop/app)
+desktop/app/.dart_tool/
+desktop/app/build/
+desktop/app/**/build/
+desktop/app/.idea/
+desktop/app/*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+**/build/
+
+# Local config (secrets, api_hash)
+config/app_config.local.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Native TDLib binaries (large — run setup-tdlib.sh)
+native/tdlib/**/*.dylib
+native/tdlib/**/*.so
+native/tdlib/**/*.dll
