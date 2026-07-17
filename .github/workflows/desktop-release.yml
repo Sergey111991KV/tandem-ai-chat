@@ -1,0 +1,143 @@
+# CI: build Linux + Windows desktop release artifacts (Flutter only).
+name: Desktop Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_website:
+        description: 'Copy artifacts to Website/downloads/ and deploy (requires secrets)'
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'desktop-v*'
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev unzip curl
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build Linux release
+        working-directory: desktop
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/build-release.sh
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TandemAIChat-linux-x64
+          path: desktop/dist/TandemAIChat-linux-x64.tar.gz
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter doctor
+        shell: bash
+        run: |
+          flutter doctor -v
+          uname -a
+          echo "OS=$OS"
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Build Windows release
+        working-directory: desktop
+        shell: bash
+        run: |
+          set -euxo pipefail
+          chmod +x scripts/*.sh
+          ./scripts/build-release.sh
+          ls -lah dist/
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TandemAIChat-windows-x64
+          path: desktop/dist/TandemAIChat-windows-x64.zip
+          if-no-files-found: error
+
+      - name: Upload Windows build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-workspace
+          path: |
+            desktop/dist/
+            desktop/app/build/windows/
+          if-no-files-found: ignore
+
+  github-release:
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/TandemAIChat-linux-x64/TandemAIChat-linux-x64.tar.gz
+            artifacts/TandemAIChat-windows-x64/TandemAIChat-windows-x64.zip
+          generate_release_notes: true
+
+  publish-website:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_website
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Stage website downloads
+        run: |
+          mkdir -p Website/downloads
+          cp artifacts/TandemAIChat-linux-x64/TandemAIChat-linux-x64.tar.gz Website/downloads/
+          cp artifacts/TandemAIChat-windows-x64/TandemAIChat-windows-x64.zip Website/downloads/
+          sed -i 's/windowsDownloadReady: false/windowsDownloadReady: true/' Website/js/site-config.js
+          sed -i 's/linuxDownloadReady: false/linuxDownloadReady: true/' Website/js/site-config.js
+
+      - name: Deploy website
+        env:
+          DEPLOY_KEY: ${{ secrets.TANDEM_WEBSITE_DEPLOY_KEY }}
+        run: |
+          if [[ -z "${DEPLOY_KEY:-}" ]]; then
+            echo "TANDEM_WEBSITE_DEPLOY_KEY not set — skipping deploy"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/tandem_deploy
+          chmod 600 ~/.ssh/tandem_deploy
+          GIT_SSH_COMMAND='ssh -i ~/.ssh/tandem_deploy -o StrictHostKeyChecking=no' ./scripts/deploy-website.sh
