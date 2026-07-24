@@ -1,0 +1,3 @@
+Put the notarized TandemAIChat.dmg here (produced by scripts/archive-tandemmac-direct.sh).
+download.html links to "downloads/TandemAIChat.dmg" — keep that exact filename, or update the
+link in Website/download.html if you rename it.

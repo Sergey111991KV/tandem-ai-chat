@@ -1,0 +1,7 @@
+Place desktop release artifacts here when available:
+
+- TandemAIChat.dmg              — macOS (from scripts/archive-tandemmac-direct.sh)
+- TandemAIChat-windows-x64.zip  — Windows (from desktop/scripts/build-release.sh)
+- TandemAIChat-linux-x64.tar.gz — Linux  (from desktop/scripts/build-release.sh)
+
+download.html links to these filenames. Keep names stable or update site-config.js.
